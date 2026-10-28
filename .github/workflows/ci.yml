@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.7-pg16
+        env:
+          POSTGRES_DB: jobshift_test
+          POSTGRES_USER: jobshift
+          POSTGRES_PASSWORD: jobshift
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U jobshift -d jobshift_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql+psycopg://jobshift:jobshift@localhost:5432/jobshift_test
+      TEST_DATABASE_URL: postgresql+psycopg://jobshift:jobshift@localhost:5432/jobshift_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v10
+        with:
+          version: 0.13.5
+          python-version: "3.12"
+      - run: uv sync --locked --group dev
+        working-directory: api
+      - run: uv run alembic upgrade head
+        working-directory: api
+      - run: uv run ruff check app alembic tests
+        working-directory: api
+      - run: uv run ruff format --check app alembic tests
+        working-directory: api
+      - run: uv run pytest -q
+        working-directory: api
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+        working-directory: web
+      - run: npm audit --audit-level=moderate
+        working-directory: web
+      - run: npm test
+        working-directory: web
+      - run: npm run build
+        working-directory: web

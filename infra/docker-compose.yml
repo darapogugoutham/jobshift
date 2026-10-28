@@ -1,0 +1,61 @@
+services:
+  db:
+    image: pgvector/pgvector:0.8.7-pg16
+    environment:
+      POSTGRES_DB: jobshift
+      POSTGRES_USER: jobshift
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-jobshift_dev}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - jobshift-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jobshift -d jobshift"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  migrate:
+    build: ../api
+    environment:
+      DATABASE_URL: postgresql+psycopg://jobshift:${POSTGRES_PASSWORD:-jobshift_dev}@db:5432/jobshift
+    command: ["uv","run","--frozen","--no-dev","alembic","upgrade","head"]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+  api:
+    build: ../api
+    environment:
+      DATABASE_URL: postgresql+psycopg://jobshift:${POSTGRES_PASSWORD:-jobshift_dev}@db:5432/jobshift
+      ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+      SECURE_COOKIES: "false"
+      SESSION_TTL_HOURS: 24
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD","python","-c","import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/live')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+  cleanup:
+    build: ../api
+    environment:
+      DATABASE_URL: postgresql+psycopg://jobshift:${POSTGRES_PASSWORD:-jobshift_dev}@db:5432/jobshift
+    command: ["/bin/sh","-c","while true; do uv run --frozen --no-dev python -m app.cleanup; sleep 900; done"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+  web:
+    build: ../web
+    environment:
+      VITE_PROXY_TARGET: http://api:8000
+    ports:
+      - "127.0.0.1:5173:5173"
+    depends_on:
+      api:
+        condition: service_healthy
+volumes:
+  jobshift-postgres:

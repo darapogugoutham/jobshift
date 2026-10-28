@@ -1,0 +1,3 @@
+import {useState} from 'react';
+import {JobShiftLogo} from './JobShiftLogo';
+export function Header(){const[open,setOpen]=useState(false);return <header className="site-header"><div className="nav-wrap"><JobShiftLogo/><button className="menu-toggle" aria-expanded={open} aria-label="Toggle navigation" onClick={()=>setOpen(!open)}>☰</button><nav className={open?'nav-links is-open':'nav-links'} aria-label="Main navigation"><a onClick={()=>setOpen(false)} href="#upload">Upload</a><a onClick={()=>setOpen(false)} href="#results">Results</a><a onClick={()=>setOpen(false)} href="#simulator">Simulator</a><a onClick={()=>setOpen(false)} href="#plan">Your plan</a><span className="free-badge">Free for everyone</span></nav></div></header>}

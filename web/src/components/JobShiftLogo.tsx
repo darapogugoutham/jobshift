@@ -1,0 +1,1 @@
+export function JobShiftLogo(){return <a className="brand" href="#top" aria-label="JobShift, back to top"><span className="brand-mark" aria-hidden="true"><b>J</b><i>↗</i></span><span>JobShift</span></a>}
