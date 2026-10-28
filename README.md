@@ -87,7 +87,7 @@ There is no analytics, external AI-provider, or error-reporting transmission of 
 - **API says database unavailable:** confirm the PostgreSQL health check passes and `DATABASE_URL` uses the Compose hostname `db` inside containers. For host-run API, use `localhost` instead.
 - **Migration service fails:** inspect `docker compose ... logs migrate db`; ensure the database is healthy and the password matches `.env`, then rerun `docker compose ... up migrate`.
 - **Browser cannot call API:** use `http://localhost:5173` and keep Vite's `/api` proxy enabled. Check the API health route at <http://localhost:8000/health/ready>.
-- **Port already in use:** stop the conflicting local service or change the localhost port mappings in `infra/docker-compose.yml`.
+- **Port already in use:** PostgreSQL is published on localhost port 5433 to avoid a common local PostgreSQL conflict. If another service already uses it, change only the left side of that port mapping in `infra/docker-compose.yml`; containers still connect to `db:5432`.
 
 ## Project layout
 
