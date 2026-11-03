@@ -59,6 +59,10 @@ The frontend renders unavailable states from backend capabilities and never infe
 
 ## Migrations, tests, and checks
 
+JobShift uses test-driven development for new behavior and bug fixes: write a test and observe the expected failure, implement the smallest passing change, then refactor with tests still green. See [CONTRIBUTING.md](CONTRIBUTING.md) and the [pull request checklist](.github/pull_request_template.md). The existing code predates this workflow; existing tests are a baseline and do not prove earlier changes were developed test-first.
+
+Run frontend tests continuously during development with `cd web && npm run test:watch`.
+
 ```sh
 cd api
 uv sync --locked --group dev
